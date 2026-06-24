@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Tenant Edge OS Isolator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+    <!-- Top Navigation Bar -->
+    <nav class="navbar navbar-dark bg-dark mb-4">
+        <div class="container">
+            <span class="navbar-brand mb-0 h1">🛡️ Multi-Tenant Edge OS Isolator</span>
+            <span class="badge bg-success">Host Link: Active Windows SAM Bridge</span>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Notification Center -->
+        {% if success_message %}
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <strong>Success:</strong> {{ success_message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endif %}
+        
+        {% if error_message %}
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <strong>Alert:</strong> {{ error_message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endif %}
+
+        <div class="row g-4">
+            <!-- Left Side: Provisioning Form -->
+            <div class="col-md-4">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">🔑 Provision Edge Tenant</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="add">
+                            
+                            <div class="mb-3">
+                                <label for="username" class="form-label">Edge Username</label>
+                                <input type="text" class="form-control" id="username" name="username" placeholder="e.g., edge_tenant_1" required>
+                                <div class="form-text text-muted">Allowed: alphanumeric and underscores only.</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Password Architecture</label>
+                                <input type="password" class="form-control" id="password" name="password" placeholder="••••••••" required>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary w-100">Commit to OS</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side: Live SAM Table with Feature 3 Actions -->
+            <div class="col-md-8">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">🖥️ Active Hardware Access Control List (SAM)</h5>
+                        <span class="badge bg-light text-dark">Total Records: {{ users|length }}</span>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Hardware Tenant Identifier</th>
+                                        <th class="text-end">Privileged Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for user in users %}
+                                    <tr>
+                                        <td>{{ forloop.counter }}</td>
+                                        <td><strong>{{ user }}</strong></td>
+                                        <td class="text-end">
+                                            <!-- Feature 2: Inspect Account Details -->
+                                            <a href="?details_user={{ user }}" class="btn btn-outline-secondary btn-sm me-1">🔍 Inspect</a>
+
+                                            <!-- Feature 3: Hardware State Toggle -->
+                                            <form method="POST" style="display:inline-block;" class="me-1">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="username" value="{{ user }}">
+                                                <button type="submit" name="action" value="activate" class="btn btn-outline-success btn-sm" title="Enable Account">✔️ Enable</button>
+                                                <button type="submit" name="action" value="deactivate" class="btn btn-outline-warning btn-sm" title="Isolate Account">⚠️ Disable</button>
+                                            </form>
+
+                                            <!-- Purge Account -->
+                                            <form method="POST" onsubmit="return confirm('Purge this tenant from Windows entirely?');" style="display:inline-block;">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="action" value="delete">
+                                                <input type="hidden" name="username" value="{{ user }}">
+                                                <button type="submit" class="btn btn-outline-danger btn-sm">🛑 Purge</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="3" class="text-center text-muted py-4">No active tenants mapped in host SAM.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Feature 2: Deep Inspection Console (Displays Raw OS Metadata) -->
+                {% if selected_user_details %}
+                <div class="card shadow-sm border-secondary animate-fade-in">
+                    <div class="card-header bg-secondary text-white">
+                        <h6 class="card-title mb-0">📟 Deep Inspection Console: [{{ inspected_user }}]</h6>
+                    </div>
+                    <div class="card-body bg-dark text-success p-2">
+                        <pre class="mb-0" style="font-size: 0.85rem; font-family: 'Courier New', Courier, monospace; max-height: 250px; overflow-y: auto;">{{ selected_user_details }}</pre>
+                    </div>
+                </div>
+                {% endif %}
+
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
